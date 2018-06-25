@@ -8,9 +8,8 @@ import (
 	)
 
 func executar(imagem string) {
-	tesseract := fmt.Sprintf("tesseract %s texto -l eng", imagem)
-	cmd := exec.Command("cmd", "/C", tesseract)
-	cmd.Run()
+		tesseract := fmt.Sprintf("tesseract %s texto -l eng", imagem)
+    exec.Command("sh", "-c", tesseract).Output()
 }
 
 func obterTexto() (texto string) {
