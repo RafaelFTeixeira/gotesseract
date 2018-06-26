@@ -11,7 +11,7 @@ import (
 	)
 
 func executar() {
-		tesseract := fmt.Sprintf("tesseract imagem.png texto -l eng")
+	tesseract := "tesseract imagem.png texto -l eng"
     exec.Command("sh", "-c", tesseract).Output()
 }
 
@@ -25,13 +25,11 @@ func obterTexto() (texto string) {
 }
 
 func downloadDaImagem(url string)  {
-	   
     resposta, erro := http.Get(url)
     if erro != nil {
         log.Fatal(erro)
     }
     defer resposta.Body.Close()
-
     
     arquivo, erro := os.Create("imagem.png")
     if erro != nil {
@@ -47,9 +45,12 @@ func downloadDaImagem(url string)  {
 }
 	
 func main() {
-	imagem := os.Args[1]
-	downloadDaImagem(imagem)
-	executar()
-	texto := obterTexto()
-	fmt.Println(texto)
+	if (len(os.Args) > 1) {
+		imagem := os.Args[1]
+		downloadDaImagem(imagem)
+		executar()
+		texto := obterTexto()
+		fmt.Println(texto)
+	}
+	fmt.Println("Informe o link da imagem")
 }
