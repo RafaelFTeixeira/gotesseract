@@ -5,10 +5,13 @@ import (
 	"os"
 	"os/exec"
 	"io/ioutil"
+	"net/http"
+	"log"
+	"io"
 	)
 
-func executar(imagem string) {
-		tesseract := fmt.Sprintf("tesseract %s texto -l eng", imagem)
+func executar() {
+		tesseract := fmt.Sprintf("tesseract imagem.png texto -l eng")
     exec.Command("sh", "-c", tesseract).Output()
 }
 
@@ -20,10 +23,33 @@ func obterTexto() (texto string) {
 	texto = string(binario)
 	return
 }
+
+func downloadDaImagem(url string)  {
+	   
+    resposta, erro := http.Get(url)
+    if erro != nil {
+        log.Fatal(erro)
+    }
+    defer resposta.Body.Close()
+
+    
+    arquivo, erro := os.Create("imagem.png")
+    if erro != nil {
+        log.Fatal(erro)
+    }
+    
+    _, erro = io.Copy(arquivo, resposta.Body)
+    if erro != nil {
+        log.Fatal(erro)
+	}
+	
+    arquivo.Close()
+}
 	
 func main() {
 	imagem := os.Args[1]
-	executar(imagem)
+	downloadDaImagem(imagem)
+	executar()
 	texto := obterTexto()
 	fmt.Println(texto)
 }
