@@ -8,17 +8,35 @@ import (
 	"net/http"
 	"log"
 	"io"
+	"strings"
 	)
+	
+const NomeDoArquivoDaImagem = "imagem.png"
+const NomeDoArquivoDeTexto = "texto.txt"
 
-func executar() {
-	tesseract := "tesseract imagem.png texto -l eng"
+func main() {
+	if (len(os.Args) > 1) {
+		imagem := os.Args[1]
+		downloadDaImagem(imagem)
+		executarOCR()
+		texto := obterTexto()
+		fmt.Println(texto)
+		removerArquivos()
+	} else {
+		fmt.Println("Informe o link da imagem") 
+	}
+}
+
+func executarOCR() {
+	nomeDoArquivoDeTexto := strings.Split(NomeDoArquivoDeTexto, ".")[0]
+	tesseract := fmt.Sprintf("tesseract %s %s -l por", NomeDoArquivoDaImagem, nomeDoArquivoDeTexto)
     exec.Command("sh", "-c", tesseract).Output()
 }
 
 func obterTexto() (texto string) {
-	binario, erro := ioutil.ReadFile("texto.txt")
+	binario, erro := ioutil.ReadFile(NomeDoArquivoDeTexto)
 	if erro != nil {
-        fmt.Print(erro)
+        log.Fatal(erro)
     }
 	texto = string(binario)
 	return
@@ -31,7 +49,7 @@ func downloadDaImagem(url string)  {
     }
     defer resposta.Body.Close()
     
-    arquivo, erro := os.Create("imagem.png")
+    arquivo, erro := os.Create(NomeDoArquivoDaImagem)
     if erro != nil {
         log.Fatal(erro)
     }
@@ -43,14 +61,9 @@ func downloadDaImagem(url string)  {
 	
     arquivo.Close()
 }
-	
-func main() {
-	if (len(os.Args) > 1) {
-		imagem := os.Args[1]
-		downloadDaImagem(imagem)
-		executar()
-		texto := obterTexto()
-		fmt.Println(texto)
-	}
-	fmt.Println("Informe o link da imagem")
+
+
+func removerArquivos() {
+	os.Remove(NomeDoArquivoDaImagem)
+	os.Remove(NomeDoArquivoDeTexto)
 }

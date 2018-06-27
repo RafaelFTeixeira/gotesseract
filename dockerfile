@@ -1,5 +1,4 @@
-FROM golang:latest
+FROM golang:alpine
+LABEL maintainer="Rafael Teixeira <rafaelteixeiradev@gmail.com>"
 COPY . .
-RUN apt-get update && apt-get install
-RUN apt-get install -y -qq tesseract-ocr
-RUN apt-get install -y -qq tesseract-ocr-eng
+RUN apk update && apk add tesseract-ocr && apk add tesseract-ocr-data-por
