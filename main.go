@@ -9,22 +9,31 @@ import (
 	"log"
 	"io"
 	"strings"
+	"encoding/json"
 	)
 	
 const NomeDoArquivoDaImagem = "imagem.png"
 const NomeDoArquivoDeTexto = "texto.txt"
 
 func main() {
-	if (len(os.Args) > 1) {
-		imagem := os.Args[1]
-		downloadDaImagem(imagem)
-		executarOCR()
-		texto := obterTexto()
-		fmt.Println(texto)
-		removerArquivos()
-	} else {
-		fmt.Println("Informe o link da imagem") 
+	http.HandleFunc("/", obterImagemDaUrl)
+    http.ListenAndServe(":3000", nil)
+}
+
+func obterImagemDaUrl(w http.ResponseWriter, r *http.Request) {
+	imagens, ok := r.URL.Query()["image"]
+    
+    if !ok || len(imagens[0]) < 1 {
+        json.NewEncoder(w).Encode("Informe o link da imagem. Examplo: http://localhost:3000/?image=hello.png")
+        return
 	}
+	
+	imagem := string(imagens[0])
+	downloadDaImagem(imagem)
+	executarOCR()
+	texto := obterTexto()
+	json.NewEncoder(w).Encode(texto)
+	removerArquivos()
 }
 
 func executarOCR() {
