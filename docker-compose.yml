@@ -1,4 +1,7 @@
 version: '3'
 services:
-  go-tesseract:
-    image: rafaelteixeira/teixeiract
+  teixeiract:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
