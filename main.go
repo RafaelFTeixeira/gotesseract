@@ -8,10 +8,9 @@ import (
 	"log"
 	"io"
 	"encoding/json"
+	"math/rand"
 	)
 	
-const NomeDoArquivoDaImagem = "imagem.png"
-
 func main() {
 	http.HandleFunc("/", obterImagemDaUrl)
     http.ListenAndServe(":3000", nil)
@@ -26,14 +25,14 @@ func obterImagemDaUrl(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	imagem := string(imagens[0])
-	downloadDaImagem(imagem)
-	resultadoDoTexto := executarOCR()
+	nomeDaImagem := downloadDaImagem(imagem)
+	resultadoDoTexto := executarOCR(nomeDaImagem)
 	json.NewEncoder(w).Encode(resultadoDoTexto)
-	os.Remove(NomeDoArquivoDaImagem)
+	os.Remove(nomeDaImagem)
 }
 
-func executarOCR() (resultadoDoTexto string) {
-	tesseract := fmt.Sprintf("tesseract %s stdout -l por", NomeDoArquivoDaImagem)
+func executarOCR(nomeDaImagem string) (resultadoDoTexto string) {
+	tesseract := fmt.Sprintf("tesseract %s stdout -l por", nomeDaImagem)
 	cmd := exec.Command("sh", "-c", tesseract)
 	out, err := cmd.CombinedOutput()
     if err != nil {
@@ -44,14 +43,15 @@ func executarOCR() (resultadoDoTexto string) {
 }
 
 
-func downloadDaImagem(url string)  {
+func downloadDaImagem(url string) (nomeDaImagem string) {
     resposta, erro := http.Get(url)
     if erro != nil {
         log.Fatal(erro)
     }
     defer resposta.Body.Close()
-    
-    arquivo, erro := os.Create(NomeDoArquivoDaImagem)
+	println(url)
+	nomeDaImagem = fmt.Sprintf("imagem%d.png", rand.Intn(10000))
+    arquivo, erro := os.Create(nomeDaImagem)
     if erro != nil {
         log.Fatal(erro)
     }
@@ -61,5 +61,6 @@ func downloadDaImagem(url string)  {
         log.Fatal(erro)
 	}
 	
-    arquivo.Close()
+	arquivo.Close()
+	return
 }
