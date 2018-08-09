@@ -4,16 +4,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"io/ioutil"
 	"net/http"
 	"log"
 	"io"
-	"strings"
 	"encoding/json"
 	)
 	
 const NomeDoArquivoDaImagem = "imagem.png"
-const NomeDoArquivoDeTexto = "texto.txt"
 
 func main() {
 	http.HandleFunc("/", obterImagemDaUrl)
@@ -30,26 +27,22 @@ func obterImagemDaUrl(w http.ResponseWriter, r *http.Request) {
 	
 	imagem := string(imagens[0])
 	downloadDaImagem(imagem)
-	executarOCR()
-	texto := obterTexto()
-	json.NewEncoder(w).Encode(texto)
-	removerArquivos()
+	resultadoDoTexto := executarOCR()
+	json.NewEncoder(w).Encode(resultadoDoTexto)
+	os.Remove(NomeDoArquivoDaImagem)
 }
 
-func executarOCR() {
-	nomeDoArquivoDeTexto := strings.Split(NomeDoArquivoDeTexto, ".")[0]
-	tesseract := fmt.Sprintf("tesseract %s %s -l por", NomeDoArquivoDaImagem, nomeDoArquivoDeTexto)
-    exec.Command("sh", "-c", tesseract).Output()
-}
-
-func obterTexto() (texto string) {
-	binario, erro := ioutil.ReadFile(NomeDoArquivoDeTexto)
-	if erro != nil {
-        log.Fatal(erro)
+func executarOCR() (resultadoDoTexto string) {
+	tesseract := fmt.Sprintf("tesseract %s stdout -l por", NomeDoArquivoDaImagem)
+	cmd := exec.Command("sh", "-c", tesseract)
+	out, err := cmd.CombinedOutput()
+    if err != nil {
+        log.Fatalf("cmd.Run() failed with %s\n", err)
     }
-	texto = string(binario)
+	resultadoDoTexto = string(out)
 	return
 }
+
 
 func downloadDaImagem(url string)  {
     resposta, erro := http.Get(url)
@@ -69,10 +62,4 @@ func downloadDaImagem(url string)  {
 	}
 	
     arquivo.Close()
-}
-
-
-func removerArquivos() {
-	os.Remove(NomeDoArquivoDaImagem)
-	os.Remove(NomeDoArquivoDeTexto)
 }
