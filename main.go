@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"net/http"
-	"log"
 	"io"
 	"encoding/json"
 	"strings"
@@ -42,17 +41,20 @@ func obterErros(w http.ResponseWriter, r *http.Request) {
 
 func obterImagemDaUrl(w http.ResponseWriter, r *http.Request) {
 	imagens, ok := r.URL.Query()["image"]
-    
     if !ok || len(imagens[0]) < 1 {
         json.NewEncoder(w).Encode("Informe o link da imagem. Exemplo: http://localhost:3000/?image=hello.png")
         return
 	}
-	
+
 	imagem := string(imagens[0])
 	nomeDaImagem := downloadDaImagem(imagem)
-	resultadoDoTexto := executarOCR(nomeDaImagem)
-	json.NewEncoder(w).Encode(resultadoDoTexto)
-	os.Remove(nomeDaImagem)
+	if "" != nomeDaImagem {
+		resultadoDoTexto := executarOCR(nomeDaImagem)
+		json.NewEncoder(w).Encode(resultadoDoTexto)
+		os.Remove(nomeDaImagem)
+	} else {
+		w.Write([] byte("Erro a fazer download da imagem"))
+	}
 }
 
 func executarOCR(nomeDaImagem string) (resultadoDoTexto string) {
@@ -81,20 +83,25 @@ func obterNomeDaImagem(url string) (nomeDaImagem string) {
 }
 
 func downloadDaImagem(url string) (nomeDaImagem string) {
-    resposta, erro := http.Get(url)
+	resposta, erro := http.Get(url)
+
     if erro != nil {
-        log.Fatal(erro)
+		nomeDaImagem = ""
+		return
     }
 	defer resposta.Body.Close()
 	nomeDaImagem = obterNomeDaImagem(url)
-    arquivo, erro := os.Create(nomeDaImagem)
+	arquivo, erro := os.Create(nomeDaImagem)
+	
     if erro != nil {
-        log.Fatal(erro)
+		nomeDaImagem = ""
+		return
     }
     
     _, erro = io.Copy(arquivo, resposta.Body)
     if erro != nil {
-        log.Fatal(erro)
+		nomeDaImagem = ""
+		return
 	}
 	
 	arquivo.Close()
